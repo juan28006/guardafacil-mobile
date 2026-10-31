@@ -238,7 +238,7 @@ export default function GestionReservasScreen({ navigation }) {
             </Pressable>
           )}
         </View>
-        {fechaFiltro && !claveFechaValida(fechaFiltro) ? (
+        {!!fechaFiltro && !claveFechaValida(fechaFiltro) ? (
           <Text style={styles.errorFiltro}>Usa el formato AAAA-MM-DD.</Text>
         ) : null}
 
@@ -295,7 +295,7 @@ export default function GestionReservasScreen({ navigation }) {
           ))}
         </View>
 
-        {error && reservas.length === 0 ? (
+        {!!error && reservas.length === 0 ? (
           <View style={styles.vacio}>
             <Text style={styles.errorTexto}>{error}</Text>
             <Pressable style={styles.reintentar} onPress={() => cargar()}>

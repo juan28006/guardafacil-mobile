@@ -284,7 +284,7 @@ export default function CasillerosScreen({ route, navigation }) {
         ListEmptyComponent={(
           <View style={styles.vacio}>
             <Text style={styles.vacioTexto}>
-              {error && casilleros.length === 0
+              {!!error && casilleros.length === 0
                 ? 'No hay casilleros disponibles para mostrar.'
                 : hayFiltros
                   ? 'No hay casilleros que coincidan con los filtros.'

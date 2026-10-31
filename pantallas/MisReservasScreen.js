@@ -330,7 +330,7 @@ export default function MisReservasScreen() {
           actualizadoEn={cacheInfo?.actualizadoEn}
           cacheError={cacheInfo?.cacheError}
         />
-        {error && reservas.length > 0 && (
+        {!!error && reservas.length > 0 && (
           <Text style={styles.errorTexto}>{error}</Text>
         )}
 
@@ -358,7 +358,7 @@ export default function MisReservasScreen() {
           ))}
         </View>
 
-        {error && reservas.length === 0 ? (
+        {!!error && reservas.length === 0 ? (
           <View style={styles.vacio}>
             <Text style={styles.errorTexto}>{error}</Text>
             <Pressable style={styles.reintentar} onPress={() => cargarReservas()}>

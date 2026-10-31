@@ -294,7 +294,7 @@ export default function DetalleCasilleroScreen({ route, navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.numero}>{casillero.numero}</Text>
-        {error && <Text style={styles.errorTexto}>{error} Se muestran los datos guardados.</Text>}
+        {!!error && <Text style={styles.errorTexto}>{error} Se muestran los datos guardados.</Text>}
         <AvisoOffline
           desdeCache={cacheInfo?.desdeCache}
           actualizadoEn={cacheInfo?.actualizadoEn}

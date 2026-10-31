@@ -37,7 +37,7 @@ export default function AvisoOffline({ desdeCache = false, actualizadoEn = null,
             : ''}.
         </Text>
       )}
-      {cacheError && <Text style={styles.error}>{cacheError}</Text>}
+      {!!cacheError && <Text style={styles.error}>{cacheError}</Text>}
       {cola.map((operacion) => (
         <View key={operacion.id}>
           <Text style={styles.detalle}>
@@ -57,7 +57,7 @@ export default function AvisoOffline({ desdeCache = false, actualizadoEn = null,
                 ? ` · ${operacion.ultimoError}`
                 : ' · esperando sincronización'}
           </Text>
-          {['conflicto', 'rechazada'].includes(operacion.estado) && usuario?.uid && (
+          {['conflicto', 'rechazada'].includes(operacion.estado) && !!usuario?.uid && (
             <Pressable
               accessibilityRole="button"
               onPress={() => Alert.alert(

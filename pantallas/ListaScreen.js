@@ -213,7 +213,7 @@ export default function ListaScreen({ navigation }) {
           <View>
             <Text style={styles.title}>Bienvenido a GuardaFácil</Text>
             <Text style={styles.email}>{usuario?.email}</Text>
-            {rol && <Text style={styles.rol}>Rol: {ETIQUETAS_ROL[rol] || rol}</Text>}
+            {!!rol && <Text style={styles.rol}>Rol: {ETIQUETAS_ROL[rol] || rol}</Text>}
             <AvisoOffline
               desdeCache={cacheInfo?.desdeCache}
               actualizadoEn={cacheInfo?.actualizadoEn}
@@ -273,7 +273,7 @@ export default function ListaScreen({ navigation }) {
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {busquedaNormalizada && !cargando && casillerosCoincidentes.length === 0 && (
+            {!!busquedaNormalizada && !cargando && casillerosCoincidentes.length === 0 && (
               <Text style={styles.nota}>No se encontraron casilleros con ese número.</Text>
             )}
             {casillerosCoincidentes.map((casillero) => (
@@ -339,7 +339,7 @@ export default function ListaScreen({ navigation }) {
             <Text style={styles.description}>
               {cacheInfo?.desdeCache || conectado === false ? 'Zonas guardadas:' : 'Zonas disponibles:'}
             </Text>
-            {error && (
+            {!!error && (
               <Pressable onPress={cargarZonas}>
                 <Text style={styles.reintentar}>Reintentar</Text>
               </Pressable>
