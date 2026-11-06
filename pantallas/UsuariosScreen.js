@@ -48,7 +48,6 @@ export default function UsuariosScreen() {
     return !texto || [
       item.nombreCompleto,
       item.email,
-      item.cedula,
     ].some((campo) => String(campo || '').toLowerCase().includes(texto));
   });
 
@@ -80,20 +79,29 @@ export default function UsuariosScreen() {
   const guardarEdicion = async () => {
     const nombreCompleto = nombreEditado.trim();
     const cedula = cedulaEditada.trim();
-    if (!nombreCompleto) {
-      setErrorEdicion('Escribe el nombre completo.');
-      return;
-    }
     if (cedula && !/^\d{6,12}$/.test(cedula)) {
       setErrorEdicion('La cédula debe tener entre 6 y 12 dígitos.');
+      return;
+    }
+
+    const nombreOriginal = String(usuarioEditando.nombreCompleto || '').trim();
+    const cambios = {};
+    if (nombreCompleto !== nombreOriginal) {
+      if (!nombreCompleto) {
+        setErrorEdicion('El nombre completo no puede quedar vacío.');
+        return;
+      }
+      cambios.nombreCompleto = nombreCompleto;
+    }
+    if (cedula) cambios.cedula = cedula;
+    if (Object.keys(cambios).length === 0) {
+      setErrorEdicion('No hay cambios para guardar.');
       return;
     }
 
     setGuardandoEdicion(true);
     setErrorEdicion('');
     try {
-      const cambios = { nombreCompleto };
-      if (cedula) cambios.cedula = cedula;
       const actualizado = await actualizarUsuario(usuario.uid, usuarioEditando.uid, cambios);
       setUsuarios((actuales) => actuales.map((item) => (
         item.uid === usuarioEditando.uid ? { ...item, ...actualizado } : item
@@ -192,7 +200,7 @@ export default function UsuariosScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setBusqueda}
-              placeholder="Buscar por nombre, correo o cédula"
+              placeholder="Buscar por nombre o correo"
               style={styles.buscador}
               value={busqueda}
             />
@@ -232,7 +240,6 @@ export default function UsuariosScreen() {
             <View style={styles.tarjeta}>
               <Text style={styles.nombre}>{item.nombreCompleto || item.email}</Text>
               <Text style={styles.correo}>{item.email}{esPropio ? ' (tú)' : ''}</Text>
-              {!!item.cedula && <Text style={styles.correo}>Cédula: {item.cedula}</Text>}
               <View style={styles.roles}>
                 {Object.values(ROLES).map((rol) => (
                   <Pressable
