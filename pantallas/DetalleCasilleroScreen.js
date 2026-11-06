@@ -18,6 +18,8 @@ import {
   verificarDisponibilidadCasillero,
 } from '../services/zonasService';
 import { ejecutarOEncolar } from '../services/offlineQueueService';
+import { mensajeErrorOperacion } from '../services/offlineErrors';
+import { obtenerOpcionesFechaNegocio } from '../services/fechasNegocio';
 import { esPersonal } from '../constantes/roles';
 import {
   colorEstadoCasillero,
@@ -26,13 +28,6 @@ import {
 } from '../constantes/estadosCasillero';
 
 const franjasDisponibles = ['Mañana', 'Tarde', 'Noche'];
-
-const formatearFecha = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 export default function DetalleCasilleroScreen({ route, navigation }) {
   const { zonaId, casilleroId, zonaNombre } = route.params;
@@ -77,26 +72,7 @@ export default function DetalleCasilleroScreen({ route, navigation }) {
     disponibilidadValor === true && !disponibilidadCargando
   );
 
-  const opcionesFechas = React.useMemo(() => {
-    const fechaBase = new Date();
-    const lista = [];
-
-    for (let index = 0; index < 10; index += 1) {
-      const fechaActual = new Date(fechaBase);
-      fechaActual.setDate(fechaBase.getDate() + index);
-
-      lista.push({
-        valor: formatearFecha(fechaActual),
-        etiqueta: new Intl.DateTimeFormat('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }).format(fechaActual),
-      });
-    }
-
-    return lista;
-  }, []);
+  const opcionesFechas = React.useMemo(() => obtenerOpcionesFechaNegocio(), []);
 
   const cargarCasillero = useCallback(async () => {
     try {
@@ -246,7 +222,7 @@ export default function DetalleCasilleroScreen({ route, navigation }) {
         ]
       );
     } catch (err) {
-      Alert.alert('No se pudo guardar la reserva', err.message || 'Inténtalo nuevamente.');
+      Alert.alert('No se pudo guardar la reserva', mensajeErrorOperacion(err));
     } finally {
       setGuardando(false);
     }

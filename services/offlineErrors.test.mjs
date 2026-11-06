@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { estadoErrorOperacion, esErrorDeRed } from './offlineErrors.js';
+import {
+  estadoErrorOperacion,
+  esErrorDeRed,
+  MENSAJE_CONFLICTO_RESERVA,
+  mensajeErrorOperacion,
+} from './offlineErrors.js';
 
 describe('clasificación de respuestas al sincronizar operaciones offline', () => {
   it('mantiene los errores de red pendientes para reintento', () => {
@@ -17,6 +22,19 @@ describe('clasificación de respuestas al sincronizar operaciones offline', () =
     assert.equal(estadoErrorOperacion({ status: 403, code: 'permission-denied' }), 'rechazada');
     assert.equal(estadoErrorOperacion({ status: 400, code: 'invalid-argument' }), 'rechazada');
     assert.equal(esErrorDeRed({ status: 400, message: 'API unavailable' }), false);
+  });
+
+  it('presenta el mismo mensaje claro para los conflictos de reserva de la API', () => {
+    for (const code of ['reservation-conflict', 'operation-conflict']) {
+      const error = { status: 409, code, message: 'Mensaje técnico del servidor.' };
+      assert.equal(estadoErrorOperacion(error), 'conflicto');
+      assert.equal(mensajeErrorOperacion(error), MENSAJE_CONFLICTO_RESERVA);
+    }
+
+    assert.equal(
+      mensajeErrorOperacion({ status: 409, code: 'other-conflict', message: 'Otro conflicto.' }),
+      'Otro conflicto.'
+    );
   });
 
   it('deja pendiente la operación cuando la sesión debe autenticarse otra vez', () => {

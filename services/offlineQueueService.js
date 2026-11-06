@@ -1,6 +1,11 @@
 // Cola de operaciones hechas sin conexión (reservar, cancelar, iniciar uso).
 // Se guarda en SQLite (offlineDb) y se envía a la API cuando vuelve la conexión.
-import { esErrorDeRed, estadoErrorOperacion } from './offlineErrors';
+import {
+  esErrorDeRed,
+  estadoErrorOperacion,
+  MENSAJE_CONFLICTO_RESERVA,
+  mensajeErrorOperacion,
+} from './offlineErrors';
 import {
   actualizarCacheUsuario,
   actualizarOperacionCola,
@@ -64,7 +69,7 @@ export async function agregarOperacionOffline(uid, tipo, datos) {
   if (['conflicto', 'rechazada'].includes(operacion.estado)) {
     const error = new Error(
       operacion.estado === 'conflicto'
-        ? 'Esta solicitud tiene un conflicto. Resuélvelo desde el aviso de operaciones pendientes.'
+        ? MENSAJE_CONFLICTO_RESERVA
         : 'El servidor rechazó esta solicitud. Descártala antes de crear otra.'
     );
     error.code = operacion.estado === 'conflicto' ? 'operation-conflict' : 'operation-rejected';
@@ -173,7 +178,7 @@ export async function sincronizarColaOffline(uid, { reintentarConflictos = false
         console.error(`No se pudo sincronizar ${operacion.id}:`, error);
         await actualizarOperacionCola(uid, operacion.id, {
           estado: estadoErrorOperacion(error),
-          ultimoError: error.message || 'Error al sincronizar con el servidor.',
+          ultimoError: mensajeErrorOperacion(error, 'Error al sincronizar con el servidor.'),
         });
         if (esErrorDeRed(error) || error.code === 'uid-mismatch' || error.status === 401) break;
       }
