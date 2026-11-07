@@ -17,7 +17,7 @@ import { useAuthContexto } from '../contextos/AuthContexto';
 import { useEstadoConexion } from '../contextos/EstadoConexionContexto';
 import AvisoOffline from '../componentes/AvisoOffline';
 import EstadoBadge from '../componentes/estadoBadge';
-import { obtenerTodasLasReservas } from '../services/gestionService';
+import { eliminarReserva, obtenerTodasLasReservas } from '../services/gestionService';
 import { ejecutarOEncolar, obtenerColaOffline } from '../services/offlineQueueService';
 import { aplicarColaAReservas, etiquetaOperacionLocal } from '../services/estadoColaReserva';
 import { puedeCancelarReserva } from '../services/reglasReserva';
@@ -54,6 +54,7 @@ export default function GestionReservasScreen({ navigation }) {
   const [fechaFiltro, setFechaFiltro] = useState('');
   const [reservaDetalle, setReservaDetalle] = useState(null);
   const [liberandoId, setLiberandoId] = useState(null);
+  const [eliminandoId, setEliminandoId] = useState(null);
 
   const cargar = useCallback(async (mostrarCarga = true) => {
     if (!usuario?.uid) return;
@@ -175,6 +176,46 @@ export default function GestionReservasScreen({ navigation }) {
     );
   };
 
+  const solicitarEliminacion = (reserva) => {
+    if (!puedeContactarApi) return;
+
+    Alert.alert(
+      'Eliminar reserva permanentemente',
+      `¿Eliminar la reserva del casillero ${reserva.casilleroNumero || reserva.casilleroId}? Esta acción es permanente y, a diferencia de cancelar, no conserva el historial.`,
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Eliminar reserva',
+          style: 'destructive',
+          onPress: async () => {
+            setEliminandoId(reserva.id);
+            try {
+              await eliminarReserva(usuario.uid, reserva.id);
+              setReservas((actuales) => actuales.filter((item) => item.id !== reserva.id));
+              setReservaDetalle((actual) => (actual?.id === reserva.id ? null : actual));
+            } catch (err) {
+              if (err.serverConfirmed) {
+                setReservas((actuales) => actuales.filter((item) => item.id !== reserva.id));
+                setReservaDetalle((actual) => (actual?.id === reserva.id ? null : actual));
+              }
+              const mensaje = err.status === 403
+                ? `No tienes permiso para eliminar esta reserva. ${err.message || ''}`.trim()
+                : err.status === 404
+                  ? `La reserva ya no existe o fue eliminada. ${err.message || ''}`.trim()
+                  : err.message || 'Inténtalo nuevamente.';
+              Alert.alert(
+                err.serverConfirmed ? 'Reserva eliminada' : 'No se pudo eliminar la reserva',
+                mensaje
+              );
+            } finally {
+              setEliminandoId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (cargando && reservas.length === 0) {
     return (
       <View style={styles.centrado}>
@@ -199,6 +240,11 @@ export default function GestionReservasScreen({ navigation }) {
           actualizadoEn={cacheInfo?.actualizadoEn}
           cacheError={cacheInfo?.cacheError}
         />
+        {!puedeContactarApi && (
+          <Text style={styles.avisoEliminarOffline}>
+            Eliminar reservas requiere conexión; esta acción no se guarda para después.
+          </Text>
+        )}
 
         <Pressable
           accessibilityRole="button"
@@ -335,8 +381,8 @@ export default function GestionReservasScreen({ navigation }) {
               {liberable && (
                 <Pressable
                   accessibilityRole="button"
-                  disabled={Boolean(liberandoId)}
-                  style={[styles.botonLiberar, Boolean(liberandoId) && styles.botonDeshabilitado]}
+                  disabled={Boolean(liberandoId || eliminandoId)}
+                  style={[styles.botonLiberar, Boolean(liberandoId || eliminandoId) && styles.botonDeshabilitado]}
                   onPress={() => solicitarLiberacion(reserva)}
                 >
                   <Text style={styles.botonLiberarTexto}>
@@ -344,6 +390,19 @@ export default function GestionReservasScreen({ navigation }) {
                   </Text>
                 </Pressable>
               )}
+              <Pressable
+                accessibilityRole="button"
+                disabled={!puedeContactarApi || Boolean(liberandoId || eliminandoId)}
+                style={[
+                  styles.botonEliminar,
+                  (!puedeContactarApi || Boolean(liberandoId || eliminandoId)) && styles.botonDeshabilitado,
+                ]}
+                onPress={() => solicitarEliminacion(reserva)}
+              >
+                <Text style={styles.botonEliminarTexto}>
+                  {eliminandoId === reserva.id ? 'Eliminando...' : 'Eliminar'}
+                </Text>
+              </Pressable>
             </View>
           );
         })}
@@ -485,6 +544,7 @@ const styles = StyleSheet.create({
   casillero: { color: '#172044', fontSize: 17, fontWeight: '800', flexShrink: 1 },
   detalle: { color: '#69728e', fontSize: 14, marginTop: 4 },
   detallePendiente: { color: '#9b6400', fontSize: 13, fontWeight: '700', marginTop: 8 },
+  avisoEliminarOffline: { color: '#a12d22', fontSize: 13, fontWeight: '600', marginBottom: 12 },
   botonVerDetalle: { alignSelf: 'flex-start', marginTop: 10, paddingVertical: 6 },
   botonVerDetalleTexto: { color: '#273c9c', fontSize: 14, fontWeight: '700' },
   botonLiberar: {
@@ -498,6 +558,15 @@ const styles = StyleSheet.create({
   },
   botonDeshabilitado: { opacity: 0.55 },
   botonLiberarTexto: { color: '#c0392b', fontSize: 15, fontWeight: '700' },
+  botonEliminar: {
+    alignItems: 'center',
+    backgroundColor: '#a12d22',
+    borderRadius: 10,
+    justifyContent: 'center',
+    minHeight: 46,
+    marginTop: 10,
+  },
+  botonEliminarTexto: { color: '#fff', fontSize: 15, fontWeight: '700' },
   vacio: {
     alignItems: 'center',
     backgroundColor: '#fff',
